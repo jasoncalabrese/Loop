@@ -20,14 +20,15 @@ extension ExponentialInsulinModelPreset {
     var actionDuration: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(360)
+            return .minutes(300)
         case .humalogNovologChild:
-            return .minutes(360)
+            return .minutes(300)
         case .fiasp:
-            return .minutes(360)
+            return .minutes(300)
         }
     }
 
+    /*
     var peakActivity: TimeInterval {
         switch self {
         case .humalogNovologAdult:
@@ -38,6 +39,18 @@ extension ExponentialInsulinModelPreset {
             return .minutes(55)
         }
     }
+    */
+    
+    var peakActivity: TimeInterval {
+        switch self {
+        case .humalogNovologAdult:
+            return .minutes(80)
+        case .humalogNovologChild:
+            return .minutes(60)
+        case .fiasp:
+            return .minutes(50)
+        }
+    }
 
     var initialDelay: TimeInterval {
         switch self {
@@ -46,7 +59,7 @@ extension ExponentialInsulinModelPreset {
         case .humalogNovologChild:
             return .minutes(20)
         case .fiasp:
-            return .minutes(10)
+            return .minutes(20)
         }
     }
 
@@ -61,11 +74,11 @@ extension ExponentialInsulinModelPreset {
     var title: String {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Rapid-Acting – Adults", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Peak - 80", comment: "Title of insulin model preset")
         case .humalogNovologChild:
-            return NSLocalizedString("Rapid-Acting – Children", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential 60", comment: "Title of insulin model preset")
         case .fiasp:
-            return NSLocalizedString("Fiasp", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential 50", comment: "Title of insulin model preset")
         }
     }
 

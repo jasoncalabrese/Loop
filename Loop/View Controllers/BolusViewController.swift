@@ -165,7 +165,9 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
 
     @objc
     func acceptRecommendedBolus() {
-        bolusAmountTextField?.text = recommendedBolusAmountLabel?.text
+        //bolusAmountTextField?.text = recommendedBolusAmountLabel?.text
+        let amount = bolusRecommendation?.amount ?? 0
+        bolusAmountTextField?.text = bolusUnitsFormatter.string(from: NSNumber(value: (amount * 0.7)))
     }
     
     
@@ -188,7 +190,7 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
 
         let context = LAContext()
 
-        if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) {
+        if false && context.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) {
             context.evaluatePolicy(.deviceOwnerAuthentication,
                                    localizedReason: String(format: NSLocalizedString("Authenticate to Bolus %@ Units", comment: "The message displayed during a device authentication prompt for bolus specification"), amountString),
                                    reply: { (success, error) in

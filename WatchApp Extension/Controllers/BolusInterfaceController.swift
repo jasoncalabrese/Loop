@@ -93,8 +93,8 @@ final class BolusInterfaceController: WKInterfaceController, IdentifiableClass {
                 maxBolusValue = recommendedBolus
             }
 
-            let recommendedPickerValue = pickerValueFromBolusValue(recommendedBolus)
-            pickerValue = Int(Double(recommendedPickerValue) * 1)
+            let recommendedPickerValue = pickerValueFromBolusValue(recommendedBolus * 0.7)
+            pickerValue = Int(Double(recommendedPickerValue))
 
             if let valueString = formatter.string(from: recommendedBolus) {
                 recommendedValueLabel.setText(String(format: NSLocalizedString("Rec: %@ U", comment: "The label and value showing the recommended bolus"), valueString).localizedUppercase)
