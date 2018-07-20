@@ -7,7 +7,6 @@
 
 import LoopKit
 
-
 enum ExponentialInsulinModelPreset: String {
     case humalogNovologAdult
     case humalogNovologChild
@@ -20,11 +19,11 @@ extension ExponentialInsulinModelPreset {
     var actionDuration: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(300)
-        case .humalogNovologChild:
-            return .minutes(270)
-        case .fiasp:
             return .minutes(240)
+        case .humalogNovologChild:
+            return .minutes(240)
+        case .fiasp:
+            return .minutes(210)
         }
     }
 
@@ -42,9 +41,9 @@ extension ExponentialInsulinModelPreset {
     var initialDelay: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(20)
+            return .minutes(25)
         case .humalogNovologChild:
-            return .minutes(20)
+            return .minutes(25)
         case .fiasp:
             return .minutes(20)
         }
@@ -72,11 +71,11 @@ extension ExponentialInsulinModelPreset {
     var subtitle: String? {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Duration: 300, Peak: 70", comment: "Exponential Slow")
+            return NSLocalizedString("Duration: 4h, Peak: 60, Delay: 25", comment: "Exponential Slow")
         case .humalogNovologChild:
-            return NSLocalizedString("Duration: 270, Peak: 60", comment: "Exponential Medium")
+            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 25", comment: "Exponential Medium")
         case .fiasp:
-            return NSLocalizedString("Duration: 240, Peak: 60", comment: "Exponential Fast")
+            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 20", comment: "Exponential Fast")
         }
     }
 }
