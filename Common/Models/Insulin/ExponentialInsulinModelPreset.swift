@@ -19,9 +19,9 @@ extension ExponentialInsulinModelPreset {
     var actionDuration: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(240)
+            return .minutes(250)
         case .humalogNovologChild:
-            return .minutes(240)
+            return .minutes(230)
         case .fiasp:
             return .minutes(210)
         }
@@ -30,7 +30,7 @@ extension ExponentialInsulinModelPreset {
     var peakActivity: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(70)
+            return .minutes(60)
         case .humalogNovologChild:
             return .minutes(60)
         case .fiasp:
@@ -41,9 +41,9 @@ extension ExponentialInsulinModelPreset {
     var initialDelay: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(25)
+            return .minutes(20)
         case .humalogNovologChild:
-            return .minutes(25)
+            return .minutes(20)
         case .fiasp:
             return .minutes(20)
         }
@@ -71,11 +71,11 @@ extension ExponentialInsulinModelPreset {
     var subtitle: String? {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Duration: 4h, Peak: 60, Delay: 25", comment: "Exponential Slow")
+            return NSLocalizedString("Duration: 250m, Peak: 60, Delay: 30", comment: "Exponential Slow")
         case .humalogNovologChild:
-            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 25", comment: "Exponential Medium")
+            return NSLocalizedString("Duration: 230m, Peak: 60, Delay: 20", comment: "Exponential Medium")
         case .fiasp:
-            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 20", comment: "Exponential Fast")
+            return NSLocalizedString("Duration: 210m, Peak: 60, Delay: 20", comment: "Exponential Fast")
         }
     }
 }
