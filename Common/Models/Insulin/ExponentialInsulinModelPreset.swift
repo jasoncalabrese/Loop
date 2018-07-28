@@ -32,9 +32,9 @@ extension ExponentialInsulinModelPreset {
         case .humalogNovologAdult:
             return .minutes(60)
         case .humalogNovologChild:
-            return .minutes(50)
+            return .minutes(55)
         case .fiasp:
-            return .minutes(45)
+            return .minutes(50)
         }
     }
 
@@ -73,9 +73,9 @@ extension ExponentialInsulinModelPreset {
         case .humalogNovologAdult:
             return NSLocalizedString("Duration: 210m, Peak: 60, Delay: 20", comment: "Exponential Novolog")
         case .humalogNovologChild:
-            return NSLocalizedString("Duration: 230m, Peak: 50, Delay: 15", comment: "Exponential Fiasp Slow")
+            return NSLocalizedString("Duration: 230m, Peak: 55, Delay: 15", comment: "Exponential Fiasp Slow")
         case .fiasp:
-            return NSLocalizedString("Duration: 230m, Peak: 45, Delay: 10", comment: "Exponential Fiasp Fast")
+            return NSLocalizedString("Duration: 230m, Peak: 50, Delay: 10", comment: "Exponential Fiasp Fast")
         }
     }
 }
