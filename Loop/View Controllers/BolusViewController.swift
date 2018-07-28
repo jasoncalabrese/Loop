@@ -167,7 +167,7 @@ final class BolusViewController: UITableViewController, IdentifiableClass, UITex
     func acceptRecommendedBolus() {
         //bolusAmountTextField?.text = recommendedBolusAmountLabel?.text
         let amount = bolusRecommendation?.amount ?? 0
-        bolusAmountTextField?.text = bolusUnitsFormatter.string(from: NSNumber(value: (amount * 0.65)))
+        bolusAmountTextField?.text = bolusUnitsFormatter.string(from: NSNumber(value: (amount * 0.7)))
     }
     
     
