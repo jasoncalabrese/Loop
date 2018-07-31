@@ -21,9 +21,9 @@ extension ExponentialInsulinModelPreset {
         case .humalogNovologAdult:
             return .minutes(210)
         case .humalogNovologChild:
-            return .minutes(230)
+            return .minutes(180)
         case .fiasp:
-            return .minutes(230)
+            return .minutes(210)
         }
     }
 
@@ -32,7 +32,7 @@ extension ExponentialInsulinModelPreset {
         case .humalogNovologAdult:
             return .minutes(60)
         case .humalogNovologChild:
-            return .minutes(55)
+            return .minutes(60)
         case .fiasp:
             return .minutes(50)
         }
@@ -43,7 +43,7 @@ extension ExponentialInsulinModelPreset {
         case .humalogNovologAdult:
             return .minutes(20)
         case .humalogNovologChild:
-            return .minutes(15)
+            return .minutes(20)
         case .fiasp:
             return .minutes(10)
         }
@@ -60,22 +60,22 @@ extension ExponentialInsulinModelPreset {
     var title: String {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Exponential Novolog", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Novolog Normal", comment: "Title of insulin model preset")
         case .humalogNovologChild:
-            return NSLocalizedString("Exponential Fiasp Slow", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Novolog Short", comment: "Title of insulin model preset")
         case .fiasp:
-            return NSLocalizedString("Exponential Fiasp Fast", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Fiasp", comment: "Title of insulin model preset")
         }
     }
 
     var subtitle: String? {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Duration: 210m, Peak: 60, Delay: 20", comment: "Exponential Novolog")
+            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 20", comment: "Exponential Novolog Normal")
         case .humalogNovologChild:
-            return NSLocalizedString("Duration: 230m, Peak: 55, Delay: 15", comment: "Exponential Fiasp Slow")
+            return NSLocalizedString("Duration: 3h, Peak: 60, Delay: 20", comment: "Exponential Novolog Short")
         case .fiasp:
-            return NSLocalizedString("Duration: 230m, Peak: 50, Delay: 10", comment: "Exponential Fiasp Fast")
+            return NSLocalizedString("Duration: 3.5h, Peak: 55, Delay: 15", comment: "Exponential Fiasp")
         }
     }
 }
