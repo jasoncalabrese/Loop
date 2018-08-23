@@ -19,11 +19,11 @@ extension ExponentialInsulinModelPreset {
     var actionDuration: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(210)
+            return .minutes(240)
         case .humalogNovologChild:
-            return .minutes(180)
-        case .fiasp:
             return .minutes(210)
+        case .fiasp:
+            return .minutes(240)
         }
     }
 
@@ -60,9 +60,9 @@ extension ExponentialInsulinModelPreset {
     var title: String {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Exponential Novolog Normal", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Novolog Long", comment: "Title of insulin model preset")
         case .humalogNovologChild:
-            return NSLocalizedString("Exponential Novolog Short", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Novolog Normal", comment: "Title of insulin model preset")
         case .fiasp:
             return NSLocalizedString("Exponential Fiasp", comment: "Title of insulin model preset")
         }
@@ -71,11 +71,11 @@ extension ExponentialInsulinModelPreset {
     var subtitle: String? {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 20", comment: "Exponential Novolog Normal")
+            return NSLocalizedString("Duration: 4h, Peak: 60, Delay: 20", comment: "Exponential Novolog Long")
         case .humalogNovologChild:
-            return NSLocalizedString("Duration: 3h, Peak: 60, Delay: 20", comment: "Exponential Novolog Short")
+            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 20", comment: "Exponential Novolog Normal")
         case .fiasp:
-            return NSLocalizedString("Duration: 3.5h, Peak: 55, Delay: 15", comment: "Exponential Fiasp")
+            return NSLocalizedString("Duration: 4h, Peak: 55, Delay: 15", comment: "Exponential Fiasp")
         }
     }
 }
