@@ -7,7 +7,6 @@
 
 import LoopKit
 
-
 enum ExponentialInsulinModelPreset: String {
     case humalogNovologAdult
     case humalogNovologChild
@@ -20,22 +19,22 @@ extension ExponentialInsulinModelPreset {
     var actionDuration: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(360)
+            return .minutes(240)
         case .humalogNovologChild:
-            return .minutes(360)
+            return .minutes(210)
         case .fiasp:
-            return .minutes(360)
+            return .minutes(240)
         }
     }
 
     var peakActivity: TimeInterval {
         switch self {
         case .humalogNovologAdult:
-            return .minutes(75)
+            return .minutes(60)
         case .humalogNovologChild:
-            return .minutes(65)
+            return .minutes(60)
         case .fiasp:
-            return .minutes(55)
+            return .minutes(50)
         }
     }
     
@@ -61,22 +60,22 @@ extension ExponentialInsulinModelPreset {
     var title: String {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("Rapid-Acting – Adults", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Novolog Long", comment: "Title of insulin model preset")
         case .humalogNovologChild:
-            return NSLocalizedString("Rapid-Acting – Children", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Novolog Normal", comment: "Title of insulin model preset")
         case .fiasp:
-            return NSLocalizedString("Fiasp", comment: "Title of insulin model preset")
+            return NSLocalizedString("Exponential Fiasp", comment: "Title of insulin model preset")
         }
     }
 
     var subtitle: String? {
         switch self {
         case .humalogNovologAdult:
-            return NSLocalizedString("A model based on the published absorption of Humalog, Novolog, and Apidra insulin in adults.", comment: "Subtitle of Rapid-Acting – Adult preset")
+            return NSLocalizedString("Duration: 4h, Peak: 60, Delay: 20", comment: "Exponential Novolog Long")
         case .humalogNovologChild:
-            return NSLocalizedString("An adjustment to the adult model based on empirical effects in children.", comment: "Subtitle of Rapid-Acting – Children preset")
+            return NSLocalizedString("Duration: 3.5h, Peak: 60, Delay: 20", comment: "Exponential Novolog Normal")
         case .fiasp:
-            return NSLocalizedString("A model based on the published absorption of Fiasp insulin.", comment: "Subtitle of Fiasp preset")
+            return NSLocalizedString("Duration: 4h, Peak: 55, Delay: 15", comment: "Exponential Fiasp")
         }
     }
 }
