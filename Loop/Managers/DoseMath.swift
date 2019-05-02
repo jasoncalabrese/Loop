@@ -150,14 +150,14 @@ extension TempBasalRecommendation {
             /// If the last temp basal has the same rate, and has more than `continuationInterval` of time remaining, don't set a new temp
             if matchesRate(lastTempBasal.unitsPerHour),
                 lastTempBasal.endDate.timeIntervalSince(date) > continuationInterval {
-                return nil
+                return self
             } else if matchesRate(scheduledBasalRate), scheduledBasalRateMatchesPump {
                 // If our new temp matches the scheduled rate of the pump, cancel the current temp
-                return .cancel
+                return self
             }
         } else if matchesRate(scheduledBasalRate), scheduledBasalRateMatchesPump {
             // If we recommend the in-progress scheduled basal rate of the pump, do nothing
-            return nil
+            return self
         }
 
         return self
