@@ -46,21 +46,11 @@ struct BolusConfirmationView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            BolusConfirmationVisual(progress: abs(progress.wrappedValue))
-            helpText
+            ActionButton(title: Text("Confirm"), color: .red) {
+                self.completion()
+            }
         }
         .focusable()
-        // By experimentation, it seems that 0...1 with low rotational sensitivity requires only 1/4 of one rotation.
-        // Scale accordingly, allowing negative values such that the crown can be rotated in either direction.
-        .digitalCrownRotation(
-            progress,
-            over: -1...1,
-            sensitivity: .low,
-            scalingRotationBy: 4
-        )
-        .onReceive(resetProgress) {
-            self.progress.wrappedValue = 0
-        }
     }
 
     private var isFinished: Bool { abs(progress.wrappedValue) >= 1.0 }
