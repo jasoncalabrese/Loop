@@ -73,6 +73,26 @@ extension WCSession {
         )
     }
 
+    func sendInhaledDoseMessage(_ userInfo: LogInhaledDoseUserInfo, completionHandler: @escaping (Error?) -> Void) throws {
+        guard activationState == .activated else {
+            throw MessageError.activation
+        }
+
+        guard isReachable else {
+            throw MessageError.reachability
+        }
+
+        sendMessage(userInfo.rawValue,
+            replyHandler: { reply in
+                completionHandler(nil)
+            },
+            errorHandler: { error in
+                log.info("sendInhaledDoseMessage failure: %{public}@", error.localizedDescription)
+                completionHandler(error)
+            }
+        )
+    }
+
     func sendSettingsUpdateMessage(_ userInfo: LoopSettingsUserInfo, completionHandler: @escaping (Result<WatchContext>) -> Void) throws {
         guard activationState == .activated else {
             throw MessageError.activation

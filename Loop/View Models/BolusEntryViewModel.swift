@@ -19,8 +19,11 @@ import SwiftUI
 import SwiftCharts
 
 protocol BolusEntryViewModelDelegate: AnyObject {
-    
+
     func withLoopState(do block: @escaping (LoopState) -> Void)
+
+    /// Logs an already-inhaled Afrezza cartridge. Never reaches the pump. (custom)
+    func addLoggedInhaledDose(startDate: Date, cartridgeUnits: Double)
 
     func saveGlucose(sample: NewGlucoseSample) async -> StoredGlucoseSample?
 
@@ -319,6 +322,34 @@ final class BolusEntryViewModel: ObservableObject {
     }
 
     // returns true if action succeeded
+    /// Logs an inhaled Afrezza cartridge. Separate from the Deliver path; nothing is sent to the pump.
+    /// The screen stays open so the updated active insulin and recommendation are visible. (custom)
+    func logAfrezza() {
+        delegate?.addLoggedInhaledDose(startDate: now(), cartridgeUnits: LogInhaledDoseUserInfo.defaultCartridgeUnits)
+    }
+
+    /// The lowest forecast glucose if an Afrezza cartridge is logged now, including any carbs being entered. (custom)
+    func afrezzaForecastLow() async -> PredictedGlucoseValue? {
+        guard let delegate else { return nil }
+        let dose = DoseEntry(type: .bolus, startDate: now(), value: LogInhaledDoseUserInfo.defaultCartridgeUnits, unit: .units, insulinType: .afrezza)
+        let (manualGlucose, carbEntry, replacedEntry) = (manualGlucoseSample, potentialCarbEntry, originalCarbEntry)
+        return await withCheckedContinuation { continuation in
+            delegate.withLoopState { state in
+                let prediction: [PredictedGlucoseValue]?
+                if let manualGlucose {
+                    prediction = try? state.predictGlucoseFromManualGlucose(manualGlucose, potentialBolus: dose, potentialCarbEntry: carbEntry, replacingCarbEntry: replacedEntry, includingPendingInsulin: true, considerPositiveVelocityAndRC: true)
+                } else {
+                    prediction = try? state.predictGlucose(using: .all, potentialBolus: dose, potentialCarbEntry: carbEntry, replacingCarbEntry: replacedEntry, includingPendingInsulin: true, considerPositiveVelocityAndRC: true)
+                }
+                continuation.resume(returning: prediction?.min { $0.quantity.doubleValue(for: .milligramsPerDeciliter) < $1.quantity.doubleValue(for: .milligramsPerDeciliter) })
+            }
+        }
+    }
+
+    var suspendThreshold: HKQuantity? {
+        delegate?.settings.suspendThreshold?.quantity
+    }
+
     func didPressActionButton() async -> Bool {
         enacting = true
         if await saveAndDeliver() {

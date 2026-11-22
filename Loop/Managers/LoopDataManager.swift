@@ -779,6 +779,18 @@ extension LoopDataManager {
         }
     }
 
+    // MARK: - Inhaled insulin logging (custom)
+
+    /// Logs an inhaled Afrezza dose that was already taken, recorded as the cartridge size (4U).
+    /// LoopKit scales `.afrezza` by `InsulinType.potencyFactor` for insulin on board and glucose
+    /// effects, so a 4U cartridge counts as 2U. Writes to the dose store only; never reaches the pump.
+    func addLoggedInhaledDose(startDate: Date, cartridgeUnits: Double) {
+        guard cartridgeUnits > 0, cartridgeUnits <= 12 else {
+            return
+        }
+        addManuallyEnteredDose(startDate: startDate, units: cartridgeUnits, insulinType: .afrezza)
+    }
+
     /// Adds and stores a pump reservoir volume
     ///
     /// - Parameters:

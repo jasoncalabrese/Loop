@@ -25,6 +25,8 @@ struct BolusEntryView: View {
     @State private var enteredBolusString = ""
     @State private var isInteractingWithChart = false
     @State private var editedBolusAmount = false
+    @State private var isConfirmingAfrezza = false
+    @State private var afrezzaForecastLow: PredictedGlucoseValue?
 
     @FocusState private var bolusFieldFocused: Bool
 
@@ -299,6 +301,7 @@ struct BolusEntryView: View {
                     .transition(AnyTransition.opacity.combined(with: .move(edge: .bottom)))
             }
 
+            logAfrezzaButton
             actionButton
         }
         .padding(.bottom) // FIXME: unnecessary on iPhone 8 size devices
@@ -348,6 +351,48 @@ struct BolusEntryView: View {
         )
         .buttonStyle(ActionButtonStyle(viewModel.primaryButton == .manualGlucoseEntry ? .primary : .secondary))
         .padding([.top, .horizontal])
+    }
+
+    // Logs an inhaled dose only. Its own action: never shares the Deliver path. (custom)
+    private var logAfrezzaButton: some View {
+        Button(
+            action: {
+                Task {
+                    afrezzaForecastLow = await viewModel.afrezzaForecastLow()
+                    isConfirmingAfrezza = true
+                }
+            },
+            label: { Text("Log Afrezza 4U", comment: "Button text to log an inhaled Afrezza cartridge on the bolus screen") }
+        )
+        .buttonStyle(ActionButtonStyle(.secondary))
+        .disabled(viewModel.enacting)
+        .padding([.top, .horizontal])
+        .alert(
+            Text("Log Afrezza 4U?", comment: "Alert title to confirm logging an inhaled Afrezza cartridge"),
+            isPresented: $isConfirmingAfrezza
+        ) {
+            Button(role: .cancel) { } label: { Text("Cancel", comment: "Cancel logging an inhaled Afrezza cartridge") }
+            Button {
+                viewModel.logAfrezza()
+                dismiss()
+            } label: { Text("Log", comment: "Confirm logging an inhaled Afrezza cartridge") }
+        } message: {
+            Text(afrezzaConfirmMessage)
+        }
+    }
+
+    private var afrezzaConfirmMessage: String {
+        let effective = LogInhaledDoseUserInfo.defaultCartridgeUnits * InsulinType.afrezza.potencyFactor
+        var message = String(format: NSLocalizedString("Counts as %@ U of active insulin. Nothing is delivered by the pump.", comment: "Alert message to confirm logging an inhaled Afrezza cartridge (1: injected-equivalent units)"), effective.formatted())
+        guard let low = afrezzaForecastLow else { return message }
+        let lowString = displayGlucosePreference.format(low.quantity)
+        let timeString = low.startDate.formatted(date: .omitted, time: .shortened)
+        if let threshold = viewModel.suspendThreshold, low.quantity < threshold {
+            message += "\n\n" + String(format: NSLocalizedString("⚠️ Forecast with this dose goes low: %1$@ at %2$@, below your glucose safety limit of %3$@.", comment: "Afrezza confirm warning when the forecast with the dose goes below the glucose safety limit (1: lowest glucose, 2: time, 3: safety limit)"), lowString, timeString, displayGlucosePreference.format(threshold))
+        } else {
+            message += "\n\n" + String(format: NSLocalizedString("Forecast low with this dose: %1$@ at %2$@.", comment: "Afrezza confirm forecast low (1: lowest glucose, 2: time)"), lowString, timeString)
+        }
+        return message
     }
 
     private var actionButton: some View {

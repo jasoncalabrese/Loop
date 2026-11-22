@@ -433,6 +433,18 @@ extension WatchDataManager: WCSessionDelegate {
 
             // Reply immediately
             replyHandler([:])
+        case LogInhaledDoseUserInfo.name?:
+            // Records an already-inhaled dose. Never routed to the pump.
+            // Reject stale or replayed messages, and anything dated in the future.
+            if let dose = LogInhaledDoseUserInfo(rawValue: message),
+               dose.startDate.timeIntervalSinceNow > -5 * 60,
+               dose.startDate.timeIntervalSinceNow < 60
+            {
+                deviceManager.loopManager.addLoggedInhaledDose(startDate: dose.startDate, cartridgeUnits: dose.cartridgeUnits)
+            } else {
+                log.error("Ignoring inhaled dose message: %{public}@", String(describing: message))
+            }
+            replyHandler([:])
         case LoopSettingsUserInfo.name?:
             if let watchSettings = LoopSettingsUserInfo(rawValue: message)?.settings {
                 // So far we only support watch changes of temporary schedule overrides

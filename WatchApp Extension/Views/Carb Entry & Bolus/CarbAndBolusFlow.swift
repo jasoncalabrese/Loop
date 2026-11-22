@@ -26,6 +26,7 @@ struct CarbAndBolusFlow: View {
     fileprivate enum AlertState {
         case bolusRecommendationChanged
         case communicationError(CarbAndBolusFlowViewModel.Error)
+        case confirmAfrezza
     }
 
     // MARK: - State
@@ -189,6 +190,9 @@ extension CarbAndBolusFlow {
             }
 
             if flowState == .bolusEntry {
+                if configuration == .manualBolus {
+                    logAfrezzaButton
+                }
                 saveCarbsAndBolusButton
             }
 
@@ -223,6 +227,15 @@ extension CarbAndBolusFlow {
             }
         }
         .offset(y: actionButtonOffsetY)
+        .transition(.fadeIn(after: 0.35, removal: .identity))
+    }
+
+    // Logs an inhaled dose only; deliberately not styled like the bolus button.
+    private var logAfrezzaButton: some View {
+        Button(action: { self.activeAlert = .confirmAfrezza }) {
+            Text("Afrezza 4U", comment: "Button text to log an inhaled Afrezza cartridge on Apple Watch")
+                .font(.footnote)
+        }
         .transition(.fadeIn(after: 0.35, removal: .identity))
     }
 
@@ -339,7 +352,20 @@ extension CarbAndBolusFlow {
             return recommendedBolusUpdatedAlert
         case .communicationError(let error):
             return communicationErrorAlert(for: error)
+        case .confirmAfrezza:
+            return confirmAfrezzaAlert
         }
+    }
+
+    private var confirmAfrezzaAlert: SwiftUI.Alert {
+        SwiftUI.Alert(
+            title: Text("Log Afrezza 4U?", comment: "Alert title to confirm logging an inhaled Afrezza cartridge on Apple Watch"),
+            message: Text("Records an inhaled dose. Nothing is delivered by the pump.", comment: "Alert message to confirm logging an inhaled Afrezza cartridge on Apple Watch"),
+            primaryButton: .default(Text("Log", comment: "Button to confirm logging an inhaled Afrezza cartridge on Apple Watch")) {
+                self.viewModel.logAfrezza()
+            },
+            secondaryButton: .cancel()
+        )
     }
 
     private var recommendedBolusUpdatedAlert: SwiftUI.Alert {
@@ -357,6 +383,8 @@ extension CarbAndBolusFlow {
             dismissAction = {}
         case .bolusMessageSendFailure:
             dismissAction = { self.bolusConfirmationProgress = 0 }
+        case .inhaledDoseMessageSendFailure:
+            dismissAction = {}
         }
 
         return SwiftUI.Alert(

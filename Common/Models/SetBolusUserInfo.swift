@@ -58,3 +58,48 @@ extension SetBolusUserInfo: RawRepresentable {
         return raw
     }
 }
+
+
+// MARK: - Inhaled insulin logging (custom)
+
+/// Watch → phone request to LOG an inhaled dose (Afrezza) that was already taken.
+///
+/// Deliberately a separate message from `SetBolusUserInfo`: its phone-side handler only
+/// records a dose in the dose store and has no path to the pump.
+struct LogInhaledDoseUserInfo {
+    /// The only cartridge size in use. Shown in the UI as "Afrezza 4U".
+    static let defaultCartridgeUnits: Double = 4
+
+    let cartridgeUnits: Double
+    let startDate: Date
+}
+
+
+extension LogInhaledDoseUserInfo: RawRepresentable {
+    typealias RawValue = [String: Any]
+
+    static let version = 1
+    static let name = "LogInhaledDoseUserInfo"
+
+    init?(rawValue: RawValue) {
+        guard rawValue["v"] as? Int == LogInhaledDoseUserInfo.version &&
+                rawValue["name"] as? String == LogInhaledDoseUserInfo.name,
+              let cartridgeUnits = rawValue["cu"] as? Double,
+              let startDate = rawValue["sd"] as? Date
+        else {
+            return nil
+        }
+
+        self.cartridgeUnits = cartridgeUnits
+        self.startDate = startDate
+    }
+
+    var rawValue: RawValue {
+        return [
+            "v": LogInhaledDoseUserInfo.version,
+            "name": LogInhaledDoseUserInfo.name,
+            "cu": cartridgeUnits,
+            "sd": startDate
+        ]
+    }
+}

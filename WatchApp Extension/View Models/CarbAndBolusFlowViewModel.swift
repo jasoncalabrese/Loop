@@ -19,6 +19,7 @@ final class CarbAndBolusFlowViewModel: ObservableObject {
     enum Error: Swift.Error {
         case potentialCarbEntryMessageSendFailure
         case bolusMessageSendFailure
+        case inhaledDoseMessageSendFailure
     }
 
     // MARK: - Published state
@@ -233,6 +234,38 @@ final class CarbAndBolusFlowViewModel: ObservableObject {
             self.error = .bolusMessageSendFailure
         }
     }
+
+    // MARK: - Inhaled insulin logging (custom)
+
+    /// Logs an already-inhaled Afrezza cartridge. Uses its own message type, so the phone
+    /// records the dose without any path to the pump.
+    func logAfrezza() {
+        guard !hasSentConfirmationMessage else {
+            return
+        }
+        self.hasSentConfirmationMessage = true
+
+        let dose = LogInhaledDoseUserInfo(cartridgeUnits: LogInhaledDoseUserInfo.defaultCartridgeUnits, startDate: Date())
+        do {
+            try WCSession.default.sendInhaledDoseMessage(dose) { [weak self] (error) in
+                DispatchQueue.main.async {
+                    if let error {
+                        ExtensionDelegate.shared().present(error)
+                        self?.hasSentConfirmationMessage = false
+                    } else {
+                        WKInterfaceDevice.current().play(.success)
+                    }
+                }
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1)) {
+                self.dismiss()
+            }
+        } catch {
+            self.hasSentConfirmationMessage = false
+            self.error = .inhaledDoseMessageSendFailure
+        }
+    }
 }
 
 extension CarbAndBolusFlowViewModel.Error: LocalizedError {
@@ -242,6 +275,8 @@ extension CarbAndBolusFlowViewModel.Error: LocalizedError {
             return NSLocalizedString("Unable to Reach iPhone", comment: "The title of the alert controller displayed after a potential carb entry send attempt fails")
         case .bolusMessageSendFailure:
             return NSLocalizedString("Bolus Failed", comment: "The title of the alert controller displayed after a bolus attempt fails")
+        case .inhaledDoseMessageSendFailure:
+            return NSLocalizedString("Afrezza Not Logged", comment: "The title of the alert controller displayed after logging an inhaled dose fails")
         }
     }
 
@@ -251,6 +286,8 @@ extension CarbAndBolusFlowViewModel.Error: LocalizedError {
             return NSLocalizedString("Make sure your iPhone is nearby and try again.", comment: "The recovery message displayed after a potential carb entry send attempt fails")
         case .bolusMessageSendFailure:
             return NSLocalizedString("Make sure your iPhone is nearby and try again.", comment: "The recovery message displayed after a bolus attempt fails")
+        case .inhaledDoseMessageSendFailure:
+            return NSLocalizedString("Make sure your iPhone is nearby and try again.", comment: "The recovery message displayed after logging an inhaled dose fails")
         }
     }
 }

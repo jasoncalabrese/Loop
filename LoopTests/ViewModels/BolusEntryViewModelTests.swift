@@ -864,6 +864,9 @@ fileprivate class MockBolusEntryViewModelDelegate: BolusEntryViewModelDelegate {
     func updateRemoteRecommendation() {
     }
 
+    func addLoggedInhaledDose(startDate: Date, cartridgeUnits: Double) {
+    }
+
     func roundBolusVolume(units: Double) -> Double {
         // 0.05 units for rates between 0.05-30U/hr
         // 0 is not a supported bolus volume

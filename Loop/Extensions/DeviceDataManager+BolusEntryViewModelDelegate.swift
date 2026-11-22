@@ -21,6 +21,10 @@ extension DeviceDataManager: BolusEntryViewModelDelegate, ManualDoseViewModelDel
     func addManuallyEnteredDose(startDate: Date, units: Double, insulinType: InsulinType?) {
         loopManager.addManuallyEnteredDose(startDate: startDate, units: units, insulinType: insulinType)
     }
+
+    func addLoggedInhaledDose(startDate: Date, cartridgeUnits: Double) {
+        loopManager.addLoggedInhaledDose(startDate: startDate, cartridgeUnits: cartridgeUnits)
+    }
     
     func withLoopState(do block: @escaping (LoopState) -> Void) {
         loopManager.getLoopState { block($1) }
