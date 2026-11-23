@@ -120,6 +120,7 @@ class LoopDataManagerTests: XCTestCase {
     // MARK: Mock stores
     var now: Date!
     var dosingDecisionStore: MockDosingDecisionStore!
+    var doseStore: MockDoseStore!
     var automaticDosingStatus: AutomaticDosingStatus!
     var loopDataManager: LoopDataManager!
     
@@ -159,6 +160,7 @@ class LoopDataManagerTests: XCTestCase {
         )
         
         let doseStore = MockDoseStore(for: test)
+        self.doseStore = doseStore
         doseStore.basalProfile = basalRateSchedule
         doseStore.basalProfileApplyingOverrideHistory = doseStore.basalProfile
         doseStore.sensitivitySchedule = insulinSensitivitySchedule

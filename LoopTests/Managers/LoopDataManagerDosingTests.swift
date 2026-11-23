@@ -644,4 +644,66 @@ class LoopDataManagerDosingTests: LoopDataManagerTests {
         XCTAssertEqual(insulinOnBoard?.value, 9.5)
     }
 
+
+    // MARK: Pump data stale (pod failed, no replacement)
+
+    /// Pump data 20 minutes old, with or without a known open suspend.
+    private func setUpStalePumpData(openSuspend: Bool) {
+        setUp(for: .highAndStable)
+        doseStore.lastAddedPumpData = now.addingTimeInterval(.minutes(-20))
+        doseStore.openSuspendStartDate = openSuspend ? now.addingTimeInterval(.hours(-1)) : nil
+    }
+
+    private func loopStateErrorAndBolus() -> (error: LoopError?, bolus: ManualBolusRecommendation?, bolusError: Error?) {
+        let exp = expectation(description: "getLoopState")
+        var error: LoopError?
+        var bolus: ManualBolusRecommendation?
+        var bolusError: Error?
+        loopDataManager.getLoopState { _, state in
+            error = state.error
+            do {
+                bolus = try state.recommendBolus(consideringPotentialCarbEntry: nil, replacingCarbEntry: nil, considerPositiveVelocityAndRC: true)
+            } catch {
+                bolusError = error
+            }
+            exp.fulfill()
+        }
+        wait(for: [exp], timeout: 10.0)
+        return (error, bolus, bolusError)
+    }
+
+    private func isPumpDataTooOld(_ error: Error?) -> Bool {
+        if case .pumpDataTooOld = error as? LoopError { return true }
+        return false
+    }
+
+    func testStalePumpDataWithoutOpenSuspendBlocksBolusRecommendation() {
+        setUpStalePumpData(openSuspend: false)
+        let (error, bolus, bolusError) = loopStateErrorAndBolus()
+        XCTAssertTrue(isPumpDataTooOld(error))
+        XCTAssertNil(bolus)
+        XCTAssertTrue(isPumpDataTooOld(bolusError))
+    }
+
+    func testOpenSuspendWithStalePumpDataStillRecommendsBolus() {
+        setUpStalePumpData(openSuspend: true)
+        let (error, bolus, bolusError) = loopStateErrorAndBolus()
+        XCTAssertTrue(isPumpDataTooOld(error))  // still reported: forecast only, no temp basal
+        XCTAssertNil(bolusError)
+        XCTAssertGreaterThan(bolus?.amount ?? 0, 0)
+    }
+
+    func testOpenSuspendWithStalePumpDataLoopsWithoutTempBasal() {
+        setUpStalePumpData(openSuspend: true)
+        waitOnDataQueue()
+        let delegate = MockDelegate()
+        loopDataManager.delegate = delegate
+        loopDataManager.loop()
+        waitOnDataQueue()  // the loop ends with an error, so no LoopCompleted; its work is on the same queue
+        XCTAssertNil(delegate.recommendation)
+        let decision = dosingDecisionStore.dosingDecisions.first { $0.reason == "loop" }
+        XCTAssertNotNil(decision?.predictedGlucose)
+        XCTAssertNil(decision?.automaticDoseRecommendation)
+        XCTAssertTrue(decision?.errors.contains { $0.id == "pumpDataTooOld" } ?? false)
+    }
 }

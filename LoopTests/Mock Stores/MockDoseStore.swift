@@ -68,6 +68,12 @@ class MockDoseStore: DoseStoreProtocol {
         completion(.success(.init(startDate: scenario.currentDate, value: 9.5)))
     }
     
+    var openSuspendStartDate: Date?
+
+    func getOpenSuspendStartDate(lookback: TimeInterval, completion: @escaping (Date?) -> Void) {
+        completion(openSuspendStartDate)
+    }
+
     func generateDiagnosticReport(_ completion: @escaping (String) -> Void) {
         completion("")
     }

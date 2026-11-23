@@ -49,6 +49,8 @@ protocol DoseStoreProtocol: AnyObject {
     
     // MARK: IOB and insulin effect
     func insulinOnBoard(at date: Date, completion: @escaping (_ result: DoseStoreResult<InsulinValue>) -> Void)
+
+    func getOpenSuspendStartDate(lookback: TimeInterval, completion: @escaping (_ startDate: Date?) -> Void)  // custom
     
     func getGlucoseEffects(start: Date, end: Date?, basalDosingEnd: Date?, completion: @escaping (_ result: DoseStoreResult<[GlucoseEffect]>) -> Void)
     
@@ -59,3 +61,9 @@ protocol DoseStoreProtocol: AnyObject {
 }
 
 extension DoseStore: DoseStoreProtocol { }
+
+extension DoseStoreProtocol {
+    func getOpenSuspendStartDate(completion: @escaping (_ startDate: Date?) -> Void) {
+        getOpenSuspendStartDate(lookback: .hours(24), completion: completion)
+    }
+}

@@ -442,6 +442,15 @@ final class LoopDataManager {
 
     fileprivate var lastLoopError: LoopError?
 
+    /// Start of an open suspend (no resume yet), refreshed each update. (custom)
+    /// While set, delivery is known to be zero, so stale pump data doesn't block the forecast.
+    fileprivate var openSuspendStartDate: Date?
+
+    /// Whether pump data is too old to trust, unless delivery is known stopped. (custom)
+    private func pumpDataTooOld(_ pumpStatusDate: Date, at date: Date) -> Bool {
+        return date.timeIntervalSince(pumpStatusDate) > LoopCoreConstants.inputDataRecencyInterval && openSuspendStartDate == nil
+    }
+
     /// A timeline of average velocity of glucose change counteracting predicted insulin effects
     fileprivate var insulinCounteractionEffects: [GlucoseEffectVelocity] = [] {
         didSet {
@@ -1021,6 +1030,18 @@ extension LoopDataManager {
             return (dosingDecision, .missingDataError(.glucose))
         }
 
+        // An open suspend (e.g. a failed pod with no replacement) keeps growing without new pump
+        // data, so refresh it and recompute insulin effects each update while it's open. (custom)
+        updateGroup.enter()
+        doseStore.getOpenSuspendStartDate { startDate in
+            self.openSuspendStartDate = startDate
+            updateGroup.leave()
+        }
+        _ = updateGroup.wait(timeout: .distantFuture)
+        if openSuspendStartDate != nil {
+            clearCachedInsulinEffects()
+        }
+
         let retrospectiveStart = lastGlucoseDate.addingTimeInterval(-type(of: retrospectiveCorrection).retrospectionInterval)
 
         let earliestEffectDate = Date(timeInterval: .hours(-24), since: now())
@@ -1266,7 +1287,8 @@ extension LoopDataManager {
             throw LoopError.invalidFutureGlucose(date: lastGlucoseDate)
         }
 
-        guard now().timeIntervalSince(pumpStatusDate) <= LoopCoreConstants.inputDataRecencyInterval else {
+        // Forecast still runs while delivery is known stopped (custom)
+        guard !pumpDataTooOld(pumpStatusDate, at: now()) else {
             throw LoopError.pumpDataTooOld(date: pumpStatusDate)
         }
 
@@ -1526,7 +1548,7 @@ extension LoopDataManager {
             throw LoopError.invalidFutureGlucose(date: lastGlucoseDate)
         }
 
-        guard now().timeIntervalSince(pumpStatusDate) <= LoopCoreConstants.inputDataRecencyInterval else {
+        guard !pumpDataTooOld(pumpStatusDate, at: now()) else {
             throw LoopError.pumpDataTooOld(date: pumpStatusDate)
         }
 
@@ -1731,7 +1753,9 @@ extension LoopDataManager {
 
         let pumpStatusDate = doseStore.lastAddedPumpData
 
-        if startDate.timeIntervalSince(pumpStatusDate) > LoopCoreConstants.inputDataRecencyInterval {
+        // With delivery known stopped, forecast anyway but recommend nothing (below). (custom)
+        let forecastOnly = startDate.timeIntervalSince(pumpStatusDate) > LoopCoreConstants.inputDataRecencyInterval
+        if pumpDataTooOld(pumpStatusDate, at: startDate) {
             errors.append(.pumpDataTooOld(date: pumpStatusDate))
         }
 
@@ -1798,6 +1822,14 @@ extension LoopDataManager {
             self.predictedGlucoseIncludingPendingInsulin = predictedGlucoseIncludingPendingInsulin
 
             dosingDecision.predictedGlucose = predictedGlucose
+
+            if forecastOnly {
+                // No pump to dose with: keep the forecast, skip temp basal and bolus recommendations (custom)
+                self.logger.default("Delivery stopped since %{public}@ with stale pump data; forecast only", String(describing: openSuspendStartDate))
+                let error = LoopError.pumpDataTooOld(date: pumpStatusDate)
+                dosingDecision.appendError(error)
+                return (dosingDecision, error)
+            }
 
             guard lastRequestedBolus == nil
             else {
