@@ -706,4 +706,15 @@ class LoopDataManagerDosingTests: LoopDataManagerTests {
         XCTAssertNil(decision?.automaticDoseRecommendation)
         XCTAssertTrue(decision?.errors.contains { $0.id == "pumpDataTooOld" } ?? false)
     }
+
+    func testRemoteRecommendationStoredWhenUpdateFails() {
+        // Nightscout devicestatus comes from this decision; it must keep coming while the loop errors.
+        setUpStalePumpData(openSuspend: false)
+        loopDataManager.remoteRecommendationNeedsUpdating = true
+        loopDataManager.updateRemoteRecommendation()
+        waitOnDataQueue()
+        let decision = dosingDecisionStore.dosingDecisions.first { $0.reason == "updateRemoteRecommendation" }
+        XCTAssertNotNil(decision)
+        XCTAssertTrue(decision?.errors.contains { $0.id == "pumpDataTooOld" } ?? false)
+    }
 }

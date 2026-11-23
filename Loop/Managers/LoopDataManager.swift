@@ -533,6 +533,12 @@ final class LoopDataManager {
 
                 if let error = updateError {
                     self.logger.error("Error updating manual bolus recommendation: %{public}@", String(describing: error))
+                    // Still store it, so remote services (Nightscout devicestatus) see the error and any
+                    // forecast instead of going silent until the error clears. (custom)
+                    if dosingDecision.errors.isEmpty {
+                        dosingDecision.appendError(error)
+                    }
+                    self.dosingDecisionStore.storeDosingDecision(dosingDecision) {}
                 } else {
                     do {
                         if let predictedGlucoseIncludingPendingInsulin = self.predictedGlucoseIncludingPendingInsulin,
