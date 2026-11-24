@@ -37,10 +37,12 @@ class MockDoseStore: DoseStoreProtocol {
     
     var basalProfile: BasalRateSchedule?
     
-    // Default to the adult exponential insulin model
-    var insulinModelProvider: InsulinModelProvider = StaticInsulinModelProvider(ExponentialInsulinModelPreset.rapidActingAdult)
+    // Upstream's rapidActingAdult; the fixtures assume it (custom)
+    private static let upstreamAdultModel = ExponentialInsulinModel(actionDuration: TimeInterval(minutes: 360), peakActivityTime: TimeInterval(minutes: 75))
 
-    var longestEffectDuration: TimeInterval = ExponentialInsulinModelPreset.rapidActingAdult.effectDuration
+    var insulinModelProvider: InsulinModelProvider = StaticInsulinModelProvider(MockDoseStore.upstreamAdultModel)
+
+    var longestEffectDuration: TimeInterval = MockDoseStore.upstreamAdultModel.effectDuration
 
     var insulinSensitivitySchedule: InsulinSensitivitySchedule?
     

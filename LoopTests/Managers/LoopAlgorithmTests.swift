@@ -59,7 +59,9 @@ final class LoopAlgorithmTests: XCTestCase {
         let url = bundle.url(forResource: "live_capture_input", withExtension: "json")!
         let predictionInput = try! decoder.decode(LoopPredictionInput.self, from: try! Data(contentsOf: url))
 
-        let prediction = try LoopAlgorithm.generatePrediction(input: predictionInput)
+        // Upstream's rapidActingAdult; the fixture assumes it (custom)
+        let upstreamAdult = StaticInsulinModelProvider(ExponentialInsulinModel(actionDuration: TimeInterval(minutes: 360), peakActivityTime: TimeInterval(minutes: 75)))
+        let prediction = try LoopAlgorithm.generatePrediction(input: predictionInput, insulinModelProvider: upstreamAdult)
 
         let expectedPredictedGlucose = loadPredictedGlucoseFixture("live_capture_predicted_glucose")
 
