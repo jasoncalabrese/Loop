@@ -717,4 +717,20 @@ class LoopDataManagerDosingTests: LoopDataManagerTests {
         XCTAssertNotNil(decision)
         XCTAssertTrue(decision?.errors.contains { $0.id == "pumpDataTooOld" } ?? false)
     }
+
+    // MARK: Afrezza potency factor setting (custom)
+
+    func testAfrezzaPotencyFactorFollowsSettings() {
+        setUp(for: .flatAndStable)
+        defer { InsulinType.afrezzaPotencyFactor = InsulinType.defaultAfrezzaPotencyFactor }
+
+        loopDataManager.mutateSettings { $0.afrezzaPotencyFactor = 0.2 }
+        waitOnDataQueue()
+        XCTAssertEqual(InsulinType.afrezzaPotencyFactor, 0.2)
+        XCTAssertEqual(loopDataManager.therapySettings.afrezzaPotencyFactor, 0.2)
+
+        loopDataManager.mutateSettings { $0.afrezzaPotencyFactor = nil }
+        waitOnDataQueue()
+        XCTAssertEqual(InsulinType.afrezzaPotencyFactor, InsulinType.defaultAfrezzaPotencyFactor)
+    }
 }

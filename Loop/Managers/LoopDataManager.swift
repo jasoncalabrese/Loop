@@ -98,6 +98,7 @@ final class LoopDataManager {
         self.lockedLastLoopCompleted = Locked(lastLoopCompleted)
         self.lockedBasalDeliveryState = Locked(basalDeliveryState)
         self.lockedSettings = Locked(settings)
+        InsulinType.afrezzaPotencyFactor = settings.afrezzaPotencyFactor ?? InsulinType.defaultAfrezzaPotencyFactor  // (custom)
         self.dosingEnabled = settings.dosingEnabled
 
         self.overrideHistory = overrideHistory
@@ -322,6 +323,12 @@ final class LoopDataManager {
             }
             invalidateCachedEffects = true
             analyticsServicesManager.didChangeInsulinModel()
+        }
+
+        // Afrezza doses count at this factor for IOB and the forecast (custom)
+        if newValue.afrezzaPotencyFactor != oldValue.afrezzaPotencyFactor {
+            InsulinType.afrezzaPotencyFactor = newValue.afrezzaPotencyFactor ?? InsulinType.defaultAfrezzaPotencyFactor
+            invalidateCachedEffects = true
         }
 
         if newValue.maximumBolus != oldValue.maximumBolus {
@@ -2522,12 +2529,14 @@ extension LoopDataManager {
                             insulinSensitivitySchedule: settings.insulinSensitivitySchedule,
                             carbRatioSchedule: settings.carbRatioSchedule,
                             basalRateSchedule: settings.basalRateSchedule,
-                            defaultRapidActingModel: settings.defaultRapidActingModel)
+                            defaultRapidActingModel: settings.defaultRapidActingModel,
+                            afrezzaPotencyFactor: settings.afrezzaPotencyFactor)
         }
         
         set {
             mutateSettings { settings in
                 settings.defaultRapidActingModel = newValue.defaultRapidActingModel
+                settings.afrezzaPotencyFactor = newValue.afrezzaPotencyFactor
                 settings.insulinSensitivitySchedule = newValue.insulinSensitivitySchedule
                 settings.carbRatioSchedule = newValue.carbRatioSchedule
                 settings.basalRateSchedule = newValue.basalRateSchedule

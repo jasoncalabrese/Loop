@@ -74,6 +74,9 @@ public struct LoopSettings: Equatable {
     public var automaticDosingStrategy: AutomaticDosingStrategy = .tempBasalOnly
 
     public var defaultRapidActingModel: ExponentialInsulinModelPreset?
+
+    /// Afrezza potency factor; nil means the default (custom)
+    public var afrezzaPotencyFactor: Double?
     
     public var glucoseUnit: HKUnit? {
         return glucoseTargetRangeSchedule?.unit
@@ -94,7 +97,8 @@ public struct LoopSettings: Equatable {
         maximumBolus: Double? = nil,
         suspendThreshold: GlucoseThreshold? = nil,
         automaticDosingStrategy: AutomaticDosingStrategy = .tempBasalOnly,
-        defaultRapidActingModel: ExponentialInsulinModelPreset? = nil
+        defaultRapidActingModel: ExponentialInsulinModelPreset? = nil,
+        afrezzaPotencyFactor: Double? = nil
     ) {
         self.dosingEnabled = dosingEnabled
         self.glucoseTargetRangeSchedule = glucoseTargetRangeSchedule
@@ -111,6 +115,7 @@ public struct LoopSettings: Equatable {
         self.suspendThreshold = suspendThreshold
         self.automaticDosingStrategy = automaticDosingStrategy
         self.defaultRapidActingModel = defaultRapidActingModel
+        self.afrezzaPotencyFactor = afrezzaPotencyFactor
     }
 }
 
