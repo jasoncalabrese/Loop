@@ -17,6 +17,7 @@ extension UserDefaults {
         case loopNotRunningNotifications = "com.loopkit.Loop.loopNotRunningNotifications"
         case inFlightAutomaticDose = "com.loopkit.Loop.inFlightAutomaticDose"
         case favoriteFoods = "com.loopkit.Loop.favoriteFoods"
+        case sharesExerciseData = "com.loopkit.Loop.sharesExerciseData"
     }
 
     var legacyPumpManagerRawValue: PumpManager.RawValue? {
@@ -107,6 +108,15 @@ extension UserDefaults {
             } catch {
                 assertionFailure("Unable to encode stored favorite foods")
             }
+        }
+    }
+
+    var sharesExerciseData: Bool {
+        get {
+            bool(forKey: Key.sharesExerciseData.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.sharesExerciseData.rawValue)
         }
     }
 }

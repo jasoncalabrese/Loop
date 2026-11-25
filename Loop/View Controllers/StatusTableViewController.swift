@@ -1679,6 +1679,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                           isOnboardingComplete: onboardingManager.isComplete,
                                           therapySettingsViewModelDelegate: deviceManager,
                                           delegate: self)
+        viewModel.exerciseDataSharing = deviceManager.exerciseDataSharing
         let hostingController = DismissibleHostingController(
             rootView: SettingsView(viewModel: viewModel, localizedAppNameAndVersion: supportManager.localizedAppNameAndVersion)
                 .environmentObject(deviceManager.displayGlucosePreference)

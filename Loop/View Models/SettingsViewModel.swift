@@ -74,6 +74,8 @@ public class SettingsViewModel: ObservableObject {
     let isOnboardingComplete: Bool
     let therapySettingsViewModelDelegate: TherapySettingsViewModelDelegate?
 
+    var exerciseDataSharing: ExerciseDataSharing?
+
     @Published var isClosedLoopAllowed: Bool
 
     var closedLoopDescriptiveText: String? {

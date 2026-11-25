@@ -93,6 +93,10 @@ public struct SettingsView: View {
                         servicesSection
                     }
 
+                    if let exerciseDataSharing = viewModel.exerciseDataSharing {
+                        exerciseSection(exerciseDataSharing)
+                    }
+
                     ForEach(customSections) { customSectionName in
                         menuItemsForSection(name: customSectionName)
                     }
@@ -402,6 +406,22 @@ extension SettingsView {
                         actions: serviceChoices
                     )
                 )
+            }
+        }
+    }
+
+    private func exerciseSection(_ sharing: ExerciseDataSharing) -> some View {
+        Section {
+            Toggle(
+                NSLocalizedString("Read Exercise Data", comment: "Settings toggle for reading exercise data from Apple Health"),
+                isOn: Binding(get: { sharing.isEnabled }, set: { newValue in Task { await sharing.setEnabled(newValue) } })
+            )
+        } header: {
+            SectionHeader(label: NSLocalizedString("Exercise", comment: "Settings section header for exercise data"))
+        } footer: {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(String(format: NSLocalizedString("When on, %1$@ reads your workouts, steps and physical effort from Apple Health and shares them with connected services that accept them.", comment: "Settings exercise data footer (1: app name)"), appName))
+                ForEach(sharing.serviceDescriptions, id: \.self) { Text($0) }
             }
         }
     }

@@ -8,6 +8,7 @@
 
 import os.log
 import Foundation
+import HealthKit
 import LoopKit
 
 enum RemoteDataType: String, CaseIterable {
@@ -20,6 +21,8 @@ enum RemoteDataType: String, CaseIterable {
     case cgmEvent = "CgmEvent"
     case settings = "Settings"
     case overrides = "Overrides"
+    case exercise = "Exercise"
+    case healthSamples = "HealthSamples"
 
     var debugDescription: String {
         return self.rawValue
@@ -99,6 +102,12 @@ final class RemoteDataServicesManager {
 
     private var lockedFailedUploads: Locked<Set<UploadTaskKey>>
 
+    private let exerciseStore: ExerciseStore
+
+    var exerciseDataDescriptions: [String] {
+        remoteDataServices.compactMap(\.exerciseDataDescription)
+    }
+
     var failedUploads: [UploadTaskKey] {
         Array(lockedFailedUploads.value)
     }
@@ -147,8 +156,10 @@ final class RemoteDataServicesManager {
         cgmEventStore: CgmEventStore,
         settingsStore: SettingsStore,
         overrideHistory: TemporaryScheduleOverrideHistory,
-        insulinDeliveryStore: InsulinDeliveryStore
+        insulinDeliveryStore: InsulinDeliveryStore,
+        exerciseStore: ExerciseStore
     ) {
+        self.exerciseStore = exerciseStore
         self.alertStore = alertStore
         self.carbStore = carbStore
         self.doseStore = doseStore
@@ -169,6 +180,8 @@ final class RemoteDataServicesManager {
         uploadGlucoseData(to: remoteDataService)
         uploadPumpEventData(to: remoteDataService)
         uploadSettingsData(to: remoteDataService)
+        uploadExerciseData(to: remoteDataService)
+        uploadHealthSamples(to: remoteDataService)
     }
 
     private func clearQueryAnchors(for remoteDataService: RemoteDataService) {
@@ -196,6 +209,10 @@ final class RemoteDataServicesManager {
                 remoteDataServices.forEach { self.uploadDosingDecisionData(to: $0) }
             case .glucose:
                 remoteDataServices.forEach { self.uploadGlucoseData(to: $0) }
+                // Health data can't be read while the phone is locked, so observer
+                // callbacks can be missed; catch up on each glucose upload (custom)
+                remoteDataServices.forEach { self.uploadExerciseData(to: $0) }
+                remoteDataServices.forEach { self.uploadHealthSamples(to: $0) }
             case .pumpEvent:
                 remoteDataServices.forEach { self.uploadPumpEventData(to: $0) }
             case .cgmEvent:
@@ -204,6 +221,10 @@ final class RemoteDataServicesManager {
                 remoteDataServices.forEach { self.uploadSettingsData(to: $0) }
             case .overrides:
                 remoteDataServices.forEach { self.uploadTemporaryOverrideData(to: $0) }
+            case .exercise:
+                remoteDataServices.forEach { self.uploadExerciseData(to: $0) }
+            case .healthSamples:
+                remoteDataServices.forEach { self.uploadHealthSamples(to: $0) }
             }
         }
     }
@@ -644,4 +665,86 @@ fileprivate extension UserDefaults {
         removeObject(forKey: queryAnchorKey(for: remoteDataService, withRemoteDataType: remoteDataType))
     }
 
+}
+
+extension RemoteDataServicesManager {
+    private func uploadExerciseData(to remoteDataService: RemoteDataService) {
+        guard UserDefaults.standard.sharesExerciseData else {
+            return
+        }
+
+        // Not in uploadGroup: remote commands wait on that group, and a long Health backfill
+        // shouldn't hold up their confirmation (custom)
+        let key = UploadTaskKey(serviceIdentifier: remoteDataService.pluginIdentifier, remoteDataType: .exercise)
+
+        dispatchQueue(key).async {
+            let semaphore = DispatchSemaphore(value: 0)
+            let previousQueryAnchor = UserDefaults.appGroup?.getQueryAnchor(for: remoteDataService, withRemoteDataType: .exercise) ?? ExerciseStore.QueryAnchor()
+            var continueUpload = false
+
+            Task {
+                do {
+                    let (queryAnchor, added, deleted) = try await self.exerciseStore.executeWorkoutQuery(fromQueryAnchor: previousQueryAnchor, limit: remoteDataService.exerciseDataLimit ?? HKObjectQueryNoLimit)
+                    try await remoteDataService.uploadExerciseData(added: added, deleted: deleted)
+                    UserDefaults.appGroup?.setQueryAnchor(for: remoteDataService, withRemoteDataType: .exercise, queryAnchor)
+                    continueUpload = queryAnchor != previousQueryAnchor
+                    self.uploadSucceeded(key)
+                } catch {
+                    self.log.error("Error synchronizing exercise data: %{public}@", String(describing: error))
+                    self.uploadFailed(key)
+                    continueUpload = false  // retry on the next trigger, not in a tight loop
+                }
+                semaphore.signal()
+            }
+
+            semaphore.wait()
+            if continueUpload {
+                self.uploadExerciseData(to: remoteDataService)
+            }
+        }
+    }
+
+    private func uploadHealthSamples(to remoteDataService: RemoteDataService) {
+        guard UserDefaults.standard.sharesExerciseData else {
+            return
+        }
+
+        // Not in uploadGroup: remote commands wait on that group, and a long Health backfill
+        // shouldn't hold up their confirmation (custom)
+        let key = UploadTaskKey(serviceIdentifier: remoteDataService.pluginIdentifier, remoteDataType: .healthSamples)
+
+        dispatchQueue(key).async {
+            let semaphore = DispatchSemaphore(value: 0)
+            var queryAnchor = UserDefaults.appGroup?.getQueryAnchor(for: remoteDataService, withRemoteDataType: .healthSamples) ?? ExerciseStore.HealthSampleQueryAnchor()
+            var continueUpload = false
+
+            Task {
+                do {
+                    for kind in ExerciseDataSharing.healthSampleKinds {
+                        let previous = queryAnchor.anchors[kind] ?? ExerciseStore.QueryAnchor()
+                        let (anchor, added, deleted) = try await self.exerciseStore.executeSampleQuery(kind: kind, fromQueryAnchor: previous, limit: remoteDataService.healthSampleDataLimit ?? HKObjectQueryNoLimit)
+                        if !added.isEmpty || !deleted.isEmpty {
+                            try await remoteDataService.uploadHealthSamples(kind: kind, added: added, deleted: deleted)
+                        }
+                        queryAnchor.anchors[kind] = anchor
+                        UserDefaults.appGroup?.setQueryAnchor(for: remoteDataService, withRemoteDataType: .healthSamples, queryAnchor)
+                        continueUpload = continueUpload || anchor != previous
+                    }
+                    self.uploadSucceeded(key)
+                } catch {
+                    self.log.error("Error synchronizing health samples: %{public}@", String(describing: error))
+                    self.uploadFailed(key)
+                    // Earlier kinds may have advanced before a later one failed; retry on the next
+                    // trigger instead of immediately, which would repeat the failure in a tight loop
+                    continueUpload = false
+                }
+                semaphore.signal()
+            }
+
+            semaphore.wait()
+            if continueUpload {
+                self.uploadHealthSamples(to: remoteDataService)
+            }
+        }
+    }
 }

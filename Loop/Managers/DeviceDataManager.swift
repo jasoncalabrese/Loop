@@ -233,6 +233,8 @@ final class DeviceDataManager {
 
     private var watchManager: WatchDataManager!
 
+    private(set) var exerciseDataSharing: ExerciseDataSharing!
+
     // MARK: - Status Extension
 
     private var statusExtensionManager: ExtensionDataManager!
@@ -407,6 +409,8 @@ final class DeviceDataManager {
 
         watchManager = WatchDataManager(deviceManager: self, healthStore: healthStore)
 
+        let exerciseStore = ExerciseStore(healthStore: healthStore)
+
         let remoteDataServicesManager = RemoteDataServicesManager(
             alertStore: alertManager.alertStore,
             carbStore: carbStore,
@@ -416,8 +420,11 @@ final class DeviceDataManager {
             cgmEventStore: cgmEventStore,
             settingsStore: settingsManager.settingsStore,
             overrideHistory: overrideHistory,
-            insulinDeliveryStore: doseStore.insulinDeliveryStore
+            insulinDeliveryStore: doseStore.insulinDeliveryStore,
+            exerciseStore: exerciseStore
         )
+
+        exerciseDataSharing = ExerciseDataSharing(exerciseStore: exerciseStore, healthStore: healthStore, remoteDataServicesManager: remoteDataServicesManager)
 
         settingsManager.remoteDataServicesManager = remoteDataServicesManager
         
